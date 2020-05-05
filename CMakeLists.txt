@@ -39,3 +39,5 @@ add_executable(sslc
     sfalltok.h
     tokens.h
 )
+
+set_target_properties(sslc PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")

@@ -151,6 +151,10 @@
  *          edit here and there of this part.
  */
 
+#if defined(__APPLE__) || defined(__unix__)
+#define stpcpy( dest, src)  __stpcpy__( dest, src)
+#endif
+
 #define HOST_HAVE_LONG_LONG         TRUE 
 #define HAVE_INTMAX_T               FALSE
 

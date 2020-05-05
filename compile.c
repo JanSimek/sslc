@@ -1,11 +1,11 @@
 #define WIN32_LEAN_AND_MEAN
-#define _CRT_RAND_S
-#include <Windows.h>
+
 #include <stdio.h>
+#include <time.h>
 #include <stdlib.h>
+#include <string.h>
 #include "lex.h"
 #include "parse.h"
-#include <io.h>
 
 #ifdef BUILDING_DLL
 int optimize = 0;
@@ -36,14 +36,10 @@ FILE *parseroutput;
 #endif
 
 static void PrintLogo() {
-	parseOutput("Startreck scripting language compiler (Fallout 2 sfall edition 4.2.3)\n\n"
-#ifndef WIN2K
+    parseOutput("Startreck scripting language compiler (Fallout 2 sfall edition 4.2.3)\n\n"
 		"Preprocessing handled by mcpp 2.7.2\n"
 		"Copyright (c) 1998, 2002-2008 Kiyoshi Matsui <kmatsui@t3.rim.or.jp>\n"
-		"All rights reserved.\n\n"
-#else
-		"Win2K/Lite version (no built-in preprocessor)\n\n"
-#endif
+        "All rights reserved.\n\n"
 	);
 }
 
@@ -56,7 +52,6 @@ int main(int argc, char **argv)
 {
 	InputStream foo;
 	char name[260], *c, *file;
-	struct FINDDATA buf;
 	FINDHANDLE handle;
 	int nologo=0;
 	int preprocess=0;
@@ -71,74 +66,69 @@ int main(int argc, char **argv)
 		parseOutput("  -n    no warnings\n");
 		parseOutput("  -b    use backward compatibility mode\n");
 		parseOutput("  -l    no logo\n");
-#ifndef WIN2K
 		parseOutput("  -p    preprocess\n");
 		parseOutput("  -P    preprocess only. (Don't generate .int)\n");
 		parseOutput("  -F    write full file paths in #line directives\n");
-#endif
 		parseOutput("  -O<level> optimize (0 - none, 1 - only remove unreferenced globals (default), 2 - full, 3 - full+experimental, don't use!)\n");
 		parseOutput("  -d    show debug info\n");
 		parseOutput("  -s    enable short-circuit evaluation for boolean operators (AND, OR)\n");
 		parseOutput("  -D    dump abstract syntax tree after optimizations\n");
-#ifndef WIN2K
 		parseOutput("  -m<macro[=val]> define a macro named \"macro\" for conditional compilation\n");
 		parseOutput("  -I<path> specify an additional directory to search for include files\n");
-#endif
-		return 1;
+
+        return 1;
 	}
+
+    srand(time(NULL));
 
 	while((argv[1] != NULL) && (argv[1][0] == '-')) {
 		switch(argv[1][1]) {
 		case 'w':
 		case '-':
-			break;
+            break;
 		case 'n':
 			warnings=0;
-			warn_level=0;
-			break;
+            warn_level=0;
+            break;
 		case 'q':
 			noinputwait=1;
-			break;
+            break;
 		case 'd':
 			debug=1;
-			break;
+            break;
 		case 'b':
 			backwardcompat = 1;
-			break;
+            break;
 		case 'l':
 			nologo=1;
-			break;
+            break;
 		case 'O':
 			if (strlen(argv[1]) == 2) optimize = 2; // full
 			else optimize = atoi(&argv[1][2]);
-			break;
-#ifndef WIN2K
+            break;
 		case 'P':
 			onlypreprocess = 1;
 		case 'p':
 			preprocess = 1;
-			break;
+            break;
 		case 'F':
 			preprocess_fullpath = 1;
-			break;
-#endif
+            break;
 		case 'D':
 			dumpTree = 1;
-			break;
+            break;
 		case 's':
 			shortCircuit = 1;
-			break;
-#ifndef WIN2K
+            break;
 		case 'm':
 			defMacro = &argv[1][2];
 			break;
 		case 'I':
 			if (!includeDir)
 				includeDir = &argv[1][2];
-			else
-				mcpp_add_include_dir(&argv[1][2]);
-			break;
-#endif
+            else
+                mcpp_add_include_dir(&argv[1][2]);
+            break;
 		default:
 			parseOutput("Unknown option %c\n", argv[1][1]);
 		}
@@ -155,32 +145,34 @@ int main(int argc, char **argv)
 	if(!nologo) PrintLogo();
 
 	compilerErrorTotal = 0;
-#ifndef WIN2K
+
 	if (defMacro) parseOutput("Define macro: %s\n", defMacro);
 	if (includeDir) parseOutput("Set include directory: %s\n", includeDir);
-#endif
+
 	while(argv[1]) {
 		file = argv[1];
 		argv++;
 		argc--;
 
-		if (FIND_SUCCESS(handle = FINDFIRST(file, &buf))) {
-			do {
-				foo.name = AddFileName(buf.name);
+//		if (FIND_SUCCESS(handle = FINDFIRST(file, &buf))) {
+//			do {
+                foo.name = AddFileName(file);
 
-				if ((foo.file = fopen(buf.name, "r")) == 0) {
-					parseOutput("Couldn't find file %s\n", buf.name);
+                if ((foo.file = fopen(file, "r")) == 0) {
+                    parseOutput("Couldn't find file %s\n", file);
 					return -1;
 				}
 
-				parseOutput("Compiling %s\n", buf.name);
+                parseOutput("Compiling %s\n", file);
 
 				if(argc>=2&&!strcmp(argv[1], "-o")) {
 					argv+=2;
 					argc-=2;
-					strcpy_s(name, 260, argv[0]);
+                    strcpy(name, argv[0]);
+//                    strcpy_s(name, 260, argv[0]);
 				} else {
-					strcpy_s(name, 260, buf.name);
+                    strcpy(name, file);
+//                    strcpy_s(name, 260, file);
 					c = strrchr(name, '.');
 
 					if (c) {
@@ -188,60 +180,65 @@ int main(int argc, char **argv)
 					}
 
 					if(onlypreprocess) {
-						strcat_s(name, 260, ".preprocessed.ssl");
+                        strcat(name, ".preprocessed.ssl");
+//                        strcat_s(name, 260, ".preprocessed.ssl");
 
-						if (strcmp(name, buf.name) == 0) {
+                        if (strcmp(name, file) == 0) {
 							c = strrchr(name, '.');
 							*c = 0;
 							*--c = 0;
-							strcat_s(name, 260, "1.preprocessed.ssl");
+                            strcat(name, "1.preprocessed.ssl");
+//                            strcat_s(name, 260, "1.preprocessed.ssl");
 						}
 					} else {
-						strcat_s(name, 260, ".int");
+                        strcat(name, ".int");
+//                        strcat_s(name, 260, ".int");
 
-						if (strcmp(name, buf.name) == 0) {
+                        if (strcmp(name, file) == 0) {
 							c = strrchr(name, '.');
 							*c = 0;
 							*--c = 0;
-							strcat_s(name, 260, "1.int");
+                            strcat(name, "1.int");
+//                            strcat(name, "1.int");
 						}
 					}
 				}
-#ifndef WIN2K
+
 				if(preprocess) {
 					FILE *newfile;
-					unsigned int letters;
-					char tmpbuf[260];
-					rand_s(&letters);
+                    unsigned int letters = rand();
+                    char tmpbuf[260];
+
 					if(onlypreprocess) {
-						strcpy_s(tmpbuf, 260, name);
+                        strcpy(tmpbuf, name);
+//                        strcpy_s(tmpbuf, 260, name);
 						newfile=fopen(tmpbuf, "w+");
 					} else {
-						sprintf(tmpbuf, "%d_%8x.tmp", GetCurrentProcessId(), letters);
+                        sprintf(tmpbuf, "%d_%8x.tmp", "XYZ", letters); // GetCurrentProcessId()
 //#if _DEBUG
 //						newfile=fopen(tmpbuf, "w+");
 //#else
 						newfile=fopen(tmpbuf, "w+DT");
 //#endif
 					}
-					if(mcpp_lib_main(foo.file, newfile, buf.name, buf.name, defMacro, includeDir)) {
-						parseOutput("*** An error occured during preprocessing of %s ***\n", buf.name);
-						return 1;
-					}
+                    if(mcpp_lib_main(foo.file, newfile, file, file, defMacro, includeDir)) {
+                        parseOutput("*** An error occured during preprocessing of %s ***\n", file);
+                        return 1;
+                    }
 					fclose(foo.file);
 					rewind(newfile);
 					foo.file=newfile;
 				}
-#endif
+
 				if(!onlypreprocess) {
 					parse(&foo, name);
 					freeCurrentProgram();
 				}
 				fclose(foo.file);
 				FreeFileNames();
-			} while (!FINDNEXT(handle, &buf));
+//			} while (!FINDNEXT(handle, &buf));
 
-			FINDCLOSE(handle, &buf);
+//			FINDCLOSE(handle, &buf);
 
 			if (compilerErrorTotal) {
 				parseOutput("\n*** THERE WERE ERRORS (%u of them) ***\n", compilerErrorTotal);
@@ -249,9 +246,9 @@ int main(int argc, char **argv)
 					getchar();
 				return 1;
 			}
-		} else {
-			parseOutput("Warning: %s not found\n", file);
-		}
+//		} else {
+//			parseOutput("Warning: %s not found\n", file);
+//		}
 	}
 	return 0;
 }

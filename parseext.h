@@ -4,6 +4,7 @@
 /*
 	Extended SSL syntax for sfall
 */
+#include "parse.h"
 
 typedef struct {
 	char* name;

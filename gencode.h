@@ -1,6 +1,8 @@
 #ifndef _GENCODE_H_
 #define _GENCODE_H_
 
+#include "parse.h"
+
 extern void generateCode(Program *, const char *);
 
 extern int writeNumExpression(NodeList *n, int i, int num, FILE *f);

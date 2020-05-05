@@ -8,6 +8,10 @@ extern char compilerSyntaxError;
 
 enum { V_INT=1, V_FLOAT, V_STRING };
 
+#ifdef __unix__
+#define _stricmp strcasecmp
+#endif
+
 /*
  * namelists and stringspaces are encoded with a 2-byte length followed by
  * the name or string.

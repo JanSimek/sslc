@@ -58,7 +58,7 @@ int expressionNesting = 0;
 static void freeVariableList(VariableList *v);
 static void freeVariable(Variable *v);
 static void parseWhile(Procedure *p, NodeList *n);
-static int writeBlock(NodeList *n, int i, FILE *f);
+//static int writeBlock(NodeList *n, int i, FILE *f);
 static int variable(VariableList *v, char **names, int type, ArrayVarList* arrays, int allowMulti);
 
 extern FILE* parseroutput;
@@ -536,7 +536,8 @@ static int addVariable(VariableList *var, char **namelist, int type, char *name)
 void GenTmpVar(Procedure *p, LexData* lex) {
 	lex->stringData=(char*)malloc(16);
 	lex->token=T_SYMBOL;
-	sprintf_s(lex->stringData, 16, "tmp.%d", tmpCounter++);
+    sprintf(lex->stringData, "tmp.%d", tmpCounter++);
+//    sprintf_s(lex->stringData, 16, "tmp.%d", tmpCounter++);
 	addVariable(&p->variables, &p->namelist, V_LOCAL, lex->stringData);
 }
 
@@ -1707,7 +1708,8 @@ static void parseWhile(Procedure *p, NodeList *n) {
 void CloneLexData(LexData *dest, LexData *source) {
 	*dest=*source;
 	dest->stringData=malloc(strlen(source->stringData)+1);
-	strcpy_s(dest->stringData, strlen(source->stringData)+1, source->stringData);
+    strcpy(dest->stringData, source->stringData);
+//    strcpy_s(dest->stringData, strlen(source->stringData)+1, source->stringData);
 }
 
 
@@ -2032,12 +2034,14 @@ void parse(InputStream *stream, const char *output) {
 		if (dumpTree) {
 			char name[260] = "";
 			char *c;
-			strcpy_s(name, 260, output);
+            strcpy(name, output);
+//            strcpy_s(name, 260, output);
 			c = strrchr(name, '.');
 			if (c) {
 				*c = 0;
 			}
-			strcat_s(name, 260, "_tree.txt");
+            strcat(name, "_tree.txt");
+//            strcat_s(name, 260, "_tree.txt");
 			dumpAllNodes(name);
 		}
 		generateCode(currentProgram, output);

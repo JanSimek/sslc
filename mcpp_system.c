@@ -36,24 +36,42 @@
  *      1. specify the constants in "configed.H" or "noconfig.H",
  *      2. append the system-dependent routines in this file.
  */
-#include    "system.H"
-#include    "internal.H"
+#include    "system.h"
+#include    "internal.h"
 
+#if defined(__APPLE__) || defined(__unix__)
+#include    "unistd.h"              /* For getcwd(), readlink() */
+#else
 #include    "direct.h"
 #define getcwd( buf, size)  _getcwd( buf, size)
+#endif
+
 #include    "sys/types.h"
 #include    "sys/stat.h"                        /* For stat()       */
 #if     ! defined( S_ISREG)
 #define S_ISREG( mode)  (mode & S_IFREG)
 #define S_ISDIR( mode)  (mode & S_IFDIR)
 #endif
+#ifdef _WIN32_
 #define S_IFREG     _S_IFREG
 #define S_IFDIR     _S_IFDIR
 #define stat( path, stbuf)  _stat( path, stbuf)
+#endif
 
 /* Function to compare path-list    */
+#if     FNAME_FOLD
+#ifdef __unix__ /* CYGWIN, MINGW, MAC   */
+#include    <strings.h>         /* POSIX 1, 2001        */
+#define str_case_eq( str1, str2)    (strcasecmp( str1, str2) == 0)
+#else   /* MSC, BORLANDC, LCC   */
+#ifdef _WIN32_
 #define stricmp( str1, str2)        _stricmp( str1, str2)
+#endif
 #define str_case_eq( str1, str2)    (stricmp( str1, str2) == 0)
+#endif
+#else   /* ! FNAME_FOLD */
+#define str_case_eq( str1, str2)    (strcmp( str1, str2) == 0)
+#endif
 
 /*
  * PATH_DELIM is defined for the O.S. which has single byte path-delimiter.
@@ -655,7 +673,11 @@ static char *   norm_path(
     size_t  start_pos = 0;
     char    slbuf1[ PATHMAX+1];             /* Working buffer       */
 
+#ifdef _WIN32_
     struct _stat    st_buf;
+#else
+    struct stat     st_buf;
+#endif
 
     if (! dir || (*dir && is_full_path( fname)))
         cfatal( "Bug: Wrong argument to norm_path()"        /* _F_  */
