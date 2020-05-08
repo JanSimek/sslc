@@ -43,16 +43,11 @@ static void PrintLogo() {
 	);
 }
 
-extern int warn_level; //the mcpp warning level
-extern int mcpp_lib_main(FILE *fin, FILE *fout, const char* in_file, const char* dir, const char* def, const char* include_dir);
-extern void mcpp_add_include_dir(char*);
-
 #ifndef BUILDING_DLL
 int main(int argc, char **argv)
 {
 	InputStream foo;
-	char name[260], *c, *file;
-	FINDHANDLE handle;
+    char name[260], *c, *file;
 	int nologo=0;
 	int preprocess=0;
 	int onlypreprocess=0;
@@ -88,7 +83,7 @@ int main(int argc, char **argv)
             break;
 		case 'n':
 			warnings=0;
-            warn_level=0;
+//            warn_level=0;
             break;
 		case 'q':
 			noinputwait=1;
@@ -126,8 +121,8 @@ int main(int argc, char **argv)
 		case 'I':
 			if (!includeDir)
 				includeDir = &argv[1][2];
-            else
-                mcpp_add_include_dir(&argv[1][2]);
+//            else
+//                mcpp_add_include_dir(&argv[1][2]);
             break;
 		default:
 			parseOutput("Unknown option %c\n", argv[1][1]);
@@ -221,10 +216,10 @@ int main(int argc, char **argv)
 						newfile=fopen(tmpbuf, "w+DT");
 //#endif
 					}
-                    if(mcpp_lib_main(foo.file, newfile, file, file, defMacro, includeDir)) {
-                        parseOutput("*** An error occured during preprocessing of %s ***\n", file);
-                        return 1;
-                    }
+//                    if(mcpp_lib_main(foo.file, newfile, file, file, defMacro, includeDir)) {
+//                        parseOutput("*** An error occured during preprocessing of %s ***\n", file);
+//                        return 1;
+//                    }
 					fclose(foo.file);
 					rewind(newfile);
 					foo.file=newfile;

@@ -13,17 +13,6 @@ add_executable(sslc
     gencode.h
     lex.c
     lex.h
-
-    # MCPP
-    system.h
-    internal.h
-    mcpp_directive.c
-    mcpp_eval.c
-    mcpp_expand.c
-    mcpp_main.c
-    mcpp_support.c
-    mcpp_system.c
-
     noconfig.h
     opcodes.h
     opextra.h
