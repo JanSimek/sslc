@@ -481,7 +481,7 @@ static void reference(int* numrefs, int** refs) {
 		*refs = (int*)realloc(*refs, (numrefs[0]+9)*8);
 	}
 	refs[0][numrefs[0]*2]=lexGetLineno(currentInputStream);
-	refs[0][numrefs[0]*2 + 1]=(int)lexGetFilename(currentInputStream);
+    refs[0][numrefs[0]*2 + 1]=(int)(size_t)lexGetFilename(currentInputStream); // FIXME cast
 	numrefs[0]++;
 }
 
@@ -824,7 +824,7 @@ static int import(Program *p, char **names) {
 	return 0;
 }
 
-static int export(Program *p, char **names) {
+static int exportTo(Program *p, char **names) {
 	if (expectToken(T_EXPORT) == -1) return 1;
 	do {
 		if (expectToken(T_VARIABLE) != -1) {
@@ -1382,8 +1382,8 @@ static int parseEvent(Procedure *p, NodeList *nodes) {
 					emitOp(p, nodes, T_END_STATEMENT);
 				}
 			}
-			p->variables.variables = realloc(p->variables.variables, sizeof(Variable)*p->variables.numVariables);
-			nodes->nodes = realloc(nodes->nodes, sizeof(Node) * (nodes->numNodes+other->nodes.numNodes+9));
+            p->variables.variables = reinterpret_cast<Variable *>(realloc(p->variables.variables, sizeof(Variable)*p->variables.numVariables));
+            nodes->nodes = reinterpret_cast<Node *>(realloc(nodes->nodes, sizeof(Node) * (nodes->numNodes+other->nodes.numNodes+9)));
 			memcpy(&nodes->nodes[nodes->numNodes], &other->nodes.nodes[1], (other->nodes.numNodes-2)*sizeof(Node));
 			for(i=nodes->numNodes;i<nodes->numNodes+other->nodes.numNodes-2;i++) {
 				if(nodes->nodes[i].token==T_SYMBOL&&nodes->nodes[i].value.type==P_LOCAL) {
@@ -1707,7 +1707,7 @@ static void parseWhile(Procedure *p, NodeList *n) {
 
 void CloneLexData(LexData *dest, LexData *source) {
 	*dest=*source;
-	dest->stringData=malloc(strlen(source->stringData)+1);
+    dest->stringData=reinterpret_cast<char *>(malloc(strlen(source->stringData)+1));
     strcpy(dest->stringData, source->stringData);
 //    strcpy_s(dest->stringData, strlen(source->stringData)+1, source->stringData);
 }
@@ -1885,14 +1885,14 @@ int top(void) {
 		}
 		if (variable(&currentProgram->variables, &currentProgram->namelist, V_GLOBAL, 0, 1) &&
 			import(currentProgram, &currentProgram->namelist) &&
-			export(currentProgram, &currentProgram->namelist) &&
+            exportTo(currentProgram, &currentProgram->namelist) &&
 			procedure()) {
 				if (expectToken(T_INCLUDE) != -1) {
 					InputStream *tmp;
 					if (tois == sizeof(includes) / sizeof(includes[0]))
 						parseError("Too many includes!");
 					includes[++tois] = currentInputStream;
-					tmp = malloc(sizeof(InputStream));
+                    tmp = reinterpret_cast<InputStream *>(malloc(sizeof(InputStream)));
 					lex();
 					if (lexData.type != T_STRING)
 						parseError("Invalid type given to include");

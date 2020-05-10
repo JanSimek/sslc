@@ -83,15 +83,15 @@ static void writeMemory(unsigned char *p, int len, FILE *f) {
 static void writenamelist(FILE *f, char *namelist) {
 	if (namelist) {
 		int len;
-		writeLong(*(unsigned long *)namelist, f);
+        writeLong(*(unsigned long *)namelist, f);
 		namelist += 4;
 		while((len = *(unsigned short *)namelist) != 0xffff) {
 			writeWord((unsigned short)len, f);
-			writeMemory(namelist + 2, len, f);
+            writeMemory(reinterpret_cast<unsigned char *>(namelist + 2), len, f);
 			namelist += len + 2;
 		}
 	}
-	writeMemory("\xff\xff\xff\xff", 4, f);
+    writeMemory((unsigned char *)"\xff\xff\xff\xff", 4, f);
 }
 
 static void writeProcAddress(NodeList *n, int i, FILE *f) {
@@ -661,12 +661,11 @@ static int writeStatement(NodeList *n, int i, FILE *f) {
 			i++;
 			break;
 		}
-		case T_IF: {
-			int true, false, j;
-
-			false = outputTell(f);
+        case T_IF: {
+            int truePos;
+            int falsePos = outputTell(f);
 			writeInt(0, f);
-			j = i;
+            int j = i;
 			i = writeExpression(n, i+1, f);
 			writeOp(O_IF, f);
 
@@ -682,11 +681,11 @@ static int writeStatement(NodeList *n, int i, FILE *f) {
 			else i = writeStatement(n, i, f);
 
 			if (n->nodes[i].token == T_ELSE) {
-				true = outputTell(f);
+                truePos = outputTell(f);
 				writeInt(0, f);
 				writeOp(O_JMP, f);
 
-				patchOffset(false+OPCODE_SIZE, outputTell(f), f);
+                patchOffset(falsePos+OPCODE_SIZE, outputTell(f), f);
 
 				i++;
 				if (n->nodes[i].token == T_BEGIN) {
@@ -696,21 +695,19 @@ static int writeStatement(NodeList *n, int i, FILE *f) {
 					i++;
 				}
 				else i = writeStatement(n, i, f);
-				patchOffset(true+OPCODE_SIZE, outputTell(f), f);
+                patchOffset(truePos+OPCODE_SIZE, outputTell(f), f);
 			}
 			else {
 				unsigned long a = outputTell(f);
-				patchOffset(false+OPCODE_SIZE, a, f);
+                patchOffset(falsePos+OPCODE_SIZE, a, f);
 			}
 
 			break;
 		}
 		case T_WHILE: {
-			int false, top, j, pos;
-
-			false = outputTell(f);
+            int falsePos = outputTell(f);
 			writeInt(0, f);
-			top = outputTell(f);
+            int top = outputTell(f);
 			loopStack[++loopStackPos].startPos = top;
 			loopStack[loopStackPos].numBreaks = 0;
 			loopStack[loopStackPos].numContinue = 0;
@@ -731,10 +728,10 @@ static int writeStatement(NodeList *n, int i, FILE *f) {
 			writeInt(top, f);
 			writeOp(O_JMP, f);
 
-			pos = outputTell(f);
-			patchOffset(false+OPCODE_SIZE, pos, f);
+            int pos = outputTell(f);
+            patchOffset(falsePos+OPCODE_SIZE, pos, f);
 
-			for (j = 0; j < loopStack[loopStackPos].numBreaks; j++) { // for each break, change it's JMP argument to proper address
+            for (int j = 0; j < loopStack[loopStackPos].numBreaks; j++) { // for each break, change it's JMP argument to proper address
 				patchOffset(breakStack[breakStackPos--] + OPCODE_SIZE, pos, f);
 			}
 			continueStackPos -= loopStack[loopStackPos].numContinue; // remove all "continue" pointers found in current loop from the stack,

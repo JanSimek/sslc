@@ -1,13 +1,13 @@
 
 set(SOURCES
-    compile.c
-    extra.c
-    gencode.c
-    lex.c
-    optimize.c
-    parse.c
-    parseext.c
-    parselib.c
+    compile.cpp
+    extra.cpp
+    gencode.cpp
+    lex.cpp
+    optimize.cpp
+    parse.cpp
+    parseext.cpp
+    parselib.cpp
 )
 
 set(HEADERS
